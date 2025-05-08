@@ -36,94 +36,121 @@ document.addEventListener("DOMContentLoaded", () => {
   function getPossibleMoves(piece, row, col) {
     let moves = [];
 
+    function isAlly(targetPiece) {
+      const allies =
+        piece === "♜" ||
+        piece === "♞" ||
+        piece === "♝" ||
+        piece === "♛" ||
+        piece === "♚" ||
+        piece === "♟"
+          ? ["♜", "♞", "♝", "♛", "♚", "♟"]
+          : ["♖", "♘", "♗", "♕", "♔", "♙"];
+      return allies.includes(targetPiece);
+    }
+
+    function addMove(r, c) {
+      const targetSquare = document.querySelector(
+        `[data-row="${r}"][data-col="${c}"]`
+      );
+      const targetPiece = targetSquare?.querySelector(".piece")?.dataset.piece;
+
+      if (targetPiece) {
+        if (isAlly(targetPiece)) return false; // Bloqueia avanço em peça aliada
+        moves.push([r, c]); // Permite captura de adversária
+        return false; // Para depois da captura
+      }
+
+      moves.push([r, c]);
+      return true;
+    }
+
     // Peão preto
     if (piece === "♟") {
-      if (row === 1) {
-        moves.push([row + 1, col]);
-        moves.push([row + 2, col]);
-      } else if (row < 7) {
-        moves.push([row + 1, col]);
-      }
+      if (row === 1) addMove(row + 1, col) && addMove(row + 2, col);
+      else if (row < 7) addMove(row + 1, col);
     }
 
     // Peão branco
     if (piece === "♙") {
-      if (row === 6) {
-        moves.push([row - 1, col]);
-        moves.push([row - 2, col]);
-      } else if (row > 0) {
-        moves.push([row - 1, col]);
-      }
+      if (row === 6) addMove(row - 1, col) && addMove(row - 2, col);
+      else if (row > 0) addMove(row - 1, col);
     }
 
     // Torre preto e branco
     if (piece === "♜" || piece === "♖") {
-      for (let i = 1; i < 8; i++) {
-        moves.push([row + i, col]);
-        moves.push([row - i, col]);
-        moves.push([row, col + i]);
-        moves.push([row, col - i]);
+      let directions = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ];
+
+      for (let [dr, dc] of directions) {
+        for (let i = 1; i < 8; i++) {
+          if (!addMove(row + dr * i, col + dc * i)) break;
+        }
       }
     }
 
     // Cavalo preto e branco
     if (piece === "♞" || piece === "♘") {
-      // Duas casas para cima, uma para a direita
-      moves.push([row - 2, col + 1]);
-      // Duas casas para cima, uma para a esquerda
-      moves.push([row - 2, col - 1]);
-
-      // Duas casas para baixo, uma para a direita
-      moves.push([row + 2, col + 1]);
-      // Duas casas para baixo, uma para a esquerda
-      moves.push([row + 2, col - 1]);
-
-      // Duas casas para direita, uma para cima
-      moves.push([row - 1, col + 2]);
-      // Duas casas para direita, uma para baixo
-      moves.push([row + 1, col + 2]);
-
-      // Duas casas para esquerda, uma para cima
-      moves.push([row - 1, col - 2]);
-      // Duas casas para esquerda, uma para baixo
-      moves.push([row + 1, col - 2]);
+      addMove(row - 2, col + 1);
+      addMove(row - 2, col - 1);
+      addMove(row + 2, col + 1);
+      addMove(row + 2, col - 1);
+      addMove(row - 1, col + 2);
+      addMove(row + 1, col + 2);
+      addMove(row - 1, col - 2);
+      addMove(row + 1, col - 2);
     }
 
     // Bispo preto e branco
     if (piece === "♝" || piece === "♗") {
-      for (let i = 1; i < 8; i++) {
-        moves.push([row + i, col + i]);
-        moves.push([row + i, col - i]);
-        moves.push([row - i, col - i]);
-        moves.push([row - i, col + i]);
+      let directions = [
+        [1, 1],
+        [1, -1],
+        [-1, -1],
+        [-1, 1],
+      ];
+
+      for (let [dr, dc] of directions) {
+        for (let i = 1; i < 8; i++) {
+          if (!addMove(row + dr * i, col + dc * i)) break;
+        }
       }
     }
 
     // Rainha preto e branco
     if (piece === "♛" || piece === "♕") {
-      for (let i = 1; i < 8; i++) {
-        moves.push([row + i, col]);
-        moves.push([row - i, col]);
-        moves.push([row, col + i]);
-        moves.push([row, col - i]);
+      let directions = [
+        [1, 1],
+        [1, -1],
+        [-1, -1],
+        [-1, 1],
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ];
 
-        moves.push([row + i, col + i]);
-        moves.push([row + i, col - i]);
-        moves.push([row - i, col - i]);
-        moves.push([row - i, col + i]);
+      for (let [dr, dc] of directions) {
+        for (let i = 1; i < 8; i++) {
+          if (!addMove(row + dr * i, col + dc * i)) break;
+        }
       }
     }
 
     // Rei preto e branco
     if (piece === "♚" || piece === "♔") {
-      moves.push([row + 1, col]);
-      moves.push([row - 1, col]);
-      moves.push([row, col + 1]);
-      moves.push([row, col - 1]);
-      moves.push([row + 1, col + 1]);
-      moves.push([row - 1, col - 1]);
-      moves.push([row + 1, col - 1]);
-      moves.push([row - 1, col + 1]);
+      addMove(row + 1, col);
+      addMove(row - 1, col);
+      addMove(row, col + 1);
+      addMove(row, col - 1);
+      addMove(row + 1, col + 1);
+      addMove(row - 1, col - 1);
+      addMove(row + 1, col - 1);
+      addMove(row - 1, col + 1);
     }
 
     return moves.filter(([r, c]) => r >= 0 && r < 8 && c >= 0 && c < 8);
