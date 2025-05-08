@@ -58,3 +58,53 @@ body {
   border-radius: 50%;
   position: absolute;
 }
+
+.captured-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.captured-black, .captured-white {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 500px; /* Define um tamanho fixo para melhor organização */
+  min-height: 80px;
+}
+
+.captured-black {
+  border: 8px solid #7a5c42;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #8b5a2b, #5a3d21);
+  box-shadow: inset 0px -6px 8px rgba(0, 0, 0, 0.7),
+    /* Rebaixado */ 0px 6px 12px rgba(0, 0, 0, 0.6); /* Elevado */
+  margin-bottom: 15px;
+}
+
+.captured-white {
+  border: 8px solid #7a5c42;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #8b5a2b, #5a3d21);
+  box-shadow: inset 0px -6px 8px rgba(0, 0, 0, 0.7),
+    /* Rebaixado */ 0px 6px 12px rgba(0, 0, 0, 0.6); /* Elevado */
+  margin-top: 15px;
+}
+
+.captured-piece {
+  font-size: 50px;
+}
+
+@keyframes squash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2, 0.5); } /* Esmaga */
+  100% { transform: scale(0); opacity: 0; } /* Some */
+}
+
+.squash {
+  animation: squash 0.3s ease-out forwards;
+}
+
+
+

@@ -30,24 +30,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+const capturedWhite = document.querySelector(".captured-white");
+const capturedBlack = document.querySelector(".captured-black");
+
 document.addEventListener("DOMContentLoaded", () => {
   const board = document.querySelector(".board");
 
+  function isAlly(piece, targetPiece) {
+    const allies = ["♜", "♞", "♝", "♛", "♚", "♟"].includes(piece)
+      ? ["♜", "♞", "♝", "♛", "♚", "♟"]
+      : ["♖", "♘", "♗", "♕", "♔", "♙"];
+    return allies.includes(targetPiece);
+  }
+
   function getPossibleMoves(piece, row, col) {
     let moves = [];
-
-    function isAlly(targetPiece) {
-      const allies =
-        piece === "♜" ||
-        piece === "♞" ||
-        piece === "♝" ||
-        piece === "♛" ||
-        piece === "♚" ||
-        piece === "♟"
-          ? ["♜", "♞", "♝", "♛", "♚", "♟"]
-          : ["♖", "♘", "♗", "♕", "♔", "♙"];
-      return allies.includes(targetPiece);
-    }
 
     function addMove(r, c) {
       const targetSquare = document.querySelector(
@@ -56,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const targetPiece = targetSquare?.querySelector(".piece")?.dataset.piece;
 
       if (targetPiece) {
-        if (isAlly(targetPiece)) return false; // Bloqueia avanço em peça aliada
+        if (isAlly(piece, targetPiece)) return false; // Bloqueia avanço em peça aliada
         moves.push([r, c]); // Permite captura de adversária
         return false; // Para depois da captura
       }
@@ -67,14 +64,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Peão preto
     if (piece === "♟") {
-      if (row === 1) addMove(row + 1, col) && addMove(row + 2, col);
-      else if (row < 7) addMove(row + 1, col);
+      if (row < 7) {
+        if (
+          !document
+            .querySelector(`[data-row="${row + 1}"][data-col="${col}"]`)
+            ?.querySelector(".piece")
+        ) {
+          addMove(row + 1, col); // Movimento normal (uma casa à frente)
+          if (
+            row === 1 &&
+            !document
+              .querySelector(`[data-row="${row + 2}"][data-col="${col}"]`)
+              ?.querySelector(".piece")
+          ) {
+            addMove(row + 2, col); // Primeiro movimento (duas casas)
+          }
+        }
+        // Captura diagonal
+        ["-1", "+1"].forEach((dc) => {
+          const targetSquare = document.querySelector(
+            `[data-row="${row + 1}"][data-col="${col + Number(dc)}"]`
+          );
+          if (targetSquare?.querySelector(".piece")) {
+            const targetPiece =
+              targetSquare.querySelector(".piece").dataset.piece;
+            if (!isAlly(piece, targetPiece)) {
+              addMove(row + 1, col + Number(dc));
+            }
+          }
+        });
+      }
     }
 
     // Peão branco
     if (piece === "♙") {
-      if (row === 6) addMove(row - 1, col) && addMove(row - 2, col);
-      else if (row > 0) addMove(row - 1, col);
+      if (row > 0) {
+        if (
+          !document
+            .querySelector(`[data-row="${row - 1}"][data-col="${col}"]`)
+            ?.querySelector(".piece")
+        ) {
+          addMove(row - 1, col); // Movimento normal (uma casa à frente)
+          if (
+            row === 6 &&
+            !document
+              .querySelector(`[data-row="${row - 2}"][data-col="${col}"]`)
+              ?.querySelector(".piece")
+          ) {
+            addMove(row - 2, col); // Primeiro movimento (duas casas)
+          }
+        }
+        // Captura diagonal
+        ["-1", "+1"].forEach((dc) => {
+          const targetSquare = document.querySelector(
+            `[data-row="${row - 1}"][data-col="${col + Number(dc)}"]`
+          );
+          if (targetSquare?.querySelector(".piece")) {
+            const targetPiece =
+              targetSquare.querySelector(".piece").dataset.piece;
+            if (!isAlly(piece, targetPiece)) {
+              addMove(row - 1, col + Number(dc));
+            }
+          }
+        });
+      }
     }
 
     // Torre preto e branco
@@ -156,6 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return moves.filter(([r, c]) => r >= 0 && r < 8 && c >= 0 && c < 8);
   }
 
+  let selectedPiece = null;
+  let validMoves = [];
+
   board.addEventListener("click", (e) => {
     if (e.target.classList.contains("piece")) {
       const piece = e.target.dataset.piece;
@@ -165,23 +221,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
       document.querySelectorAll(".highlight").forEach((el) => el.remove());
 
-      const moves = getPossibleMoves(piece, row, col);
+      validMoves = getPossibleMoves(piece, row, col);
 
-      moves.forEach(([r, c]) => {
+      validMoves.forEach(([r, c]) => {
         const targetSquare = document.querySelector(
           `[data-row="${r}"][data-col="${c}"]`
         );
+
         if (targetSquare) {
+          const targetPiece = targetSquare.querySelector(".piece");
+
           const marker = document.createElement("div");
           marker.classList.add("highlight");
+
+          // Se for inimiga, muda a cor para vermelho
+          if (targetPiece) {
+            const targetSymbol = targetPiece.dataset.piece;
+            if (!isAlly(piece, targetSymbol)) {
+              marker.style.backgroundColor = "red"; // Destaca captura em vermelho
+            }
+          }
+
           targetSquare.appendChild(marker);
         }
       });
     }
   });
-
-  let selectedPiece = null;
-  let validMoves = [];
 
   board.addEventListener("click", (e) => {
     const targetSquare = e.target.closest(".square");
@@ -199,33 +264,69 @@ document.addEventListener("DOMContentLoaded", () => {
       validMoves = getPossibleMoves(piece, row, col);
 
       validMoves.forEach(([r, c]) => {
-        const validSquare = document.querySelector(
+        const targetSquare = document.querySelector(
           `[data-row="${r}"][data-col="${c}"]`
         );
-        if (validSquare) {
+
+        if (targetSquare) {
+          const targetPiece = targetSquare.querySelector(".piece");
+
           const marker = document.createElement("div");
           marker.classList.add("highlight");
-          validSquare.appendChild(marker);
+
+          // Se for inimiga, muda a cor para vermelho
+          if (targetPiece) {
+            const targetSymbol = targetPiece.dataset.piece;
+            if (!isAlly(piece, targetSymbol)) {
+              marker.style.backgroundColor = "red"; // Destaca captura em vermelho
+            }
+          }
+
+          targetSquare.appendChild(marker);
         }
       });
     }
 
-    // Se uma casa válida foi clicada, movemos a peça
+    // Movendo a peça e capturando inimigos
     else if (selectedPiece && targetSquare.classList.contains("square")) {
       const newRow = parseInt(targetSquare.dataset.row);
       const newCol = parseInt(targetSquare.dataset.col);
 
-      // Verifica se a casa clicada está na lista de movimentos válidos
       const isValidMove = validMoves.some(
         ([r, c]) => r === newRow && c === newCol
       );
 
       if (isValidMove) {
-        // Remove peça do local original e move para nova casa
+        const targetPiece = targetSquare.querySelector(".piece");
+
+        // Captura de peça inimiga
+        if (targetPiece) {
+          const targetSymbol = targetPiece.dataset.piece;
+          if (!isAlly(selectedPiece.dataset.piece, targetSymbol)) {
+            targetPiece.remove();
+
+            // Escolhe a área correta para armazenar a peça capturada
+            const capturedSpot = ["♜", "♞", "♝", "♛", "♚", "♟"].includes(
+              targetSymbol
+            )
+              ? document.querySelector(".captured-white")
+              : document.querySelector(".captured-black");
+
+            if (capturedSpot) {
+              // Verifica se `capturedSpot` está definido corretamente
+              const capturedPiece = document.createElement("span");
+              capturedPiece.classList.add("captured-piece");
+              capturedPiece.innerText = targetSymbol;
+              capturedSpot.appendChild(capturedPiece);
+            } else {
+              console.error("Erro: `capturedSpot` não encontrado!");
+            }
+          }
+        }
+
         selectedPiece.parentElement.removeChild(selectedPiece);
         targetSquare.appendChild(selectedPiece);
 
-        // Limpa seleções e marcações
         selectedPiece = null;
         validMoves = [];
         document.querySelectorAll(".highlight").forEach((el) => el.remove());
